@@ -1,0 +1,18 @@
+CREATE TABLE `user` (
+    userID INTEGER PRIMARY KEY AUTO_INCREMENT,
+    firstName VARCHAR(255) NOT NULL,
+    lastName VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE `customLesson` (
+    cLessonID INTEGER PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    userID INTEGER NOT NULL
+);
+
+CREATE TABLE `customLessonVocabs` (
+    cLessonID INTEGER,
+    vocabID INTEGER
+)
