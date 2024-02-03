@@ -114,7 +114,7 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                     $userID = getUserID($email);
                     $success = verifyCode($userID, $code);
                     if ($success) {
-                        echo json_encode(["Error" => ""]);
+                        echo json_encode(["Error" => "", "token" => generateAndStoreToken($userID)]);
                     } else {
                         http_response_code(401);
                         echo json_encode(["Error" => "Code and email not matching"]);
