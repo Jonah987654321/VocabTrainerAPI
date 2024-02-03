@@ -39,7 +39,7 @@ All endpoints except for `login`, `createAccount`, and `verifyAccount` require a
   - `email` (string, required): The email address of the user.
   - `password` (string, required): The password of the user.
   - `modePreference` (string, required): The mode preference of the user.
-  - `class` (string, optional): The class of the user.
+  - `class` (string, required): The class of the user.
 - **Response**:
   - `Error` (string): Empty if successful.
 - **Errors**:
