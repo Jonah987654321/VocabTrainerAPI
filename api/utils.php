@@ -113,4 +113,27 @@ function createAccount($firstName, $lastName, $password, $email, $modePreference
     $stmt->execute([$userID, $verifyCode, $currentDateTime]);
 }
 
+function getUserID($email) {
+    global $conn;
+
+    $stmt = $conn->prepare("SELECT userID FROM users WHERE email=?");
+    $stmt->execute([$email]);
+    return $stmt->get_result()->fetch_column();
+}
+
+function verifyCode($userID, $code) {
+    global $conn;
+
+    $stmt = $conn->prepare("SELECT * FROM verificationCode WHERE verificationCode=? AND userID=?");
+    $stmt->execute([$code, $userID]);
+    $stmt->store_result();
+    if ($stmt->num_rows() == 0) {
+        return false;
+    } else {
+        $stmt = $conn->prepare("DELETE FROM verificationCode WHERE verificationCode=? AND userID=?");
+        $stmt->execute([$code, $userID]);
+        return true;
+    }
+}
+
 ?>

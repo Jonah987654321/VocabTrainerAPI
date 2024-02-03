@@ -20,7 +20,11 @@ $allowedEndpoints = [
     "createAccount" => [
         "allowedMethods" => ["POST"],
         "authRequired" => false
-    ]
+    ],
+    "verifyAccount" => [
+        "allowedMethods" => ["POST"],
+        "authRequired" => false
+    ],
 ];
 
 if (array_key_exists($endpoint, $allowedEndpoints)) {
@@ -37,7 +41,7 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
 
                 if ($email == null || $password == null) {
                     http_response_code(400);
-                    echo json_encode(["Error" => "Missing login credentials"]);
+                    echo json_encode(["Error" => "Missing information"]);
                     exit();
                 } else {
                     $userData = validateLogin($email, $password);
@@ -93,6 +97,25 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                 }
             }
 
+            if ($endpoint == "verifyAccount") {
+                $email = post("email");
+                $code = post("code");
+                if ($code == null || $email == null) {
+                    http_response_code(400);
+                    echo json_encode(["Error" => "Missing information"]);
+                    exit();
+                } else {
+                    $userID = getUserID($email);
+                    $success = verifyCode($userID, $code);
+                    if ($success) {
+                        echo json_encode(["Error" => ""]);
+                    } else {
+                        http_response_code(401);
+                        echo json_encode(["Error" => "Code and email not matching"]);
+                        exit();
+                    }
+                }
+            }
         }
     } else {
         http_response_code(405);
