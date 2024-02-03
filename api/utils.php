@@ -136,4 +136,17 @@ function verifyCode($userID, $code) {
     }
 }
 
+function userIsVerified($userID) {
+    global $conn;
+
+    $stmt = $conn->prepare("SELECT * FROM verificationCode WHERE userID=?");
+    $stmt->execute([$userID]);
+    $stmt->store_result();
+    if ($stmt->num_rows() == 0) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 ?>

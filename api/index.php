@@ -50,18 +50,24 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                         echo json_encode(["Error" => "Invalid login credentials"]);
                         exit();
                     } else {
-                        echo json_encode([
-                            "Error" => "", 
-                            "token" => generateAndStoreToken($userData[0]),
-                            "userData" => [
-                                "userID" => $userData[0],
-                                "firstName" => $userData[1],
-                                "lastName" => $userData[2],
-                                "email" => $userData[3],
-                                "modePreference" => $userData[5],
-                                "class" => $userData[6],
-                            ]
-                        ]);
+                        if (userIsVerified($userData[0])) {
+                            echo json_encode([
+                                "Error" => "", 
+                                "token" => generateAndStoreToken($userData[0]),
+                                "userData" => [
+                                    "userID" => $userData[0],
+                                    "firstName" => $userData[1],
+                                    "lastName" => $userData[2],
+                                    "email" => $userData[3],
+                                    "modePreference" => $userData[5],
+                                    "class" => $userData[6],
+                                ]
+                            ]);
+                        } else {
+                            http_response_code(401);
+                            echo json_encode(["Error" => "Account not verified"]);
+                            exit();
+                        }
                     }
                 }
             }
