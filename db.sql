@@ -32,3 +32,9 @@ CREATE TABLE `userVocabStats` (
     failCount INTEGER NOT NULL,
     successCount INTEGER NOT NULL
 );
+
+CREATE TABLE `verificationCode` (
+    userID INTEGER NOT NULL,
+    verificationCode INTEGER NOT NULL,
+    timeSent DATETIME NOT NULL
+);

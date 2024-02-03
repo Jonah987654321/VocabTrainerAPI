@@ -72,12 +72,45 @@ function validateToken($token) {
 function validateLogin($email, $password) {
     global $conn;
 
+    $password = hash("md5", $password);
+
     //Check if credentials are correct
     $stmt = $conn->prepare("SELECT * FROM users WHERE email=? AND password=?");
     $stmt->execute([$email, $password]);
     $result = $stmt->get_result()->fetch_row();
 
     return $result;
+}
+
+function accountExists($email) {
+    global $conn;
+
+    $stmt = $conn->prepare("SELECT * FROM users WHERE email=?");
+    $stmt->execute([$email]);
+    $stmt->store_result();
+    if ($stmt->num_rows == 1) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+function createAccount($firstName, $lastName, $password, $email, $modePreference, $class) {
+    global $conn;
+
+    $password = hash("md5", $password);
+
+    $stmt = $conn->prepare("INSERT INTO users (firstName, lastName, email, password, modePreference, klasse) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$firstName, $lastName, $email, $password, $modePreference, $class]);
+
+    $stmt = $conn->prepare("SELECT userID FROM users WHERE email=?");
+    $stmt->execute([$email]);
+    $userID = $stmt->get_result()->fetch_column();
+
+    $verifyCode = rand(111111, 999999);
+    $currentDateTime = date('Y-m-d H:i:s');
+    $stmt = $conn->prepare("INSERT INTO verificationCode VALUES (?, ?, ?)");
+    $stmt->execute([$userID, $verifyCode, $currentDateTime]);
 }
 
 ?>

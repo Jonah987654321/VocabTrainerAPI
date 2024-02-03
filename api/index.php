@@ -19,11 +19,7 @@ $allowedEndpoints = [
     ],
     "createAccount" => [
         "allowedMethods" => ["POST"],
-        "authRequired" => true
-    ],
-    "refreshToken" => [
-        "allowedMethods" => ["POST"],
-        "authRequired" => true
+        "authRequired" => false
     ]
 ];
 
@@ -44,7 +40,7 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                     echo json_encode(["Error" => "Missing login credentials"]);
                     exit();
                 } else {
-                    $userData = validateLogin($email, hash("md5", $password));
+                    $userData = validateLogin($email, $password);
                     if ($userData == null) {
                         http_response_code(401);
                         echo json_encode(["Error" => "Invalid login credentials"]);
@@ -62,6 +58,37 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                                 "class" => $userData[6],
                             ]
                         ]);
+                    }
+                }
+            }
+
+            if ($endpoint == "createAccount") {
+                $firstName = post("firstName");
+                $lastName = post("lastName");
+                $email = post("email");
+                $password = post("password");
+                $modePreference = post("modePreference");
+                $class = post("class");
+
+                if (in_array(null, [$firstName, $lastName, $email, $password, $modePreference])) {
+                    http_response_code(400);
+                    echo json_encode(["Error" => "Missing information"]);
+                    exit();
+                } else {
+                    if (accountExists($email)) {
+                        http_response_code(400);
+                        echo json_encode(["Error" => "Account with email already exists"]);
+                        exit();
+                    } else {
+                        try {
+                            createAccount($firstName, $lastName, $password, $email, $modePreference, $class);
+
+                            //Send verification code!!!
+                            echo json_encode(["Error" => ""]);
+                        } catch (Exception $e) {
+                            echo json_encode(["Error" => $e->getMessage()]);
+                        }
+                        exit();
                     }
                 }
             }
