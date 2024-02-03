@@ -1,5 +1,6 @@
 <?php
 
+include "encryption.php";
 include "dotenv.php";
 new DotEnv();
 
@@ -72,10 +73,11 @@ function validateToken($token) {
 function validateLogin($email, $password) {
     global $conn;
 
-    $password = hash("md5", $password);
+    $password = password_hash($password, PASSWORD_DEFAULT);
+    $email = hash("sha256", $email);
 
     //Check if credentials are correct
-    $stmt = $conn->prepare("SELECT * FROM users WHERE email=? AND password=?");
+    $stmt = $conn->prepare("SELECT * FROM users WHERE emailCheckHash=? AND password=?");
     $stmt->execute([$email, $password]);
     $result = $stmt->get_result()->fetch_row();
 
@@ -85,8 +87,8 @@ function validateLogin($email, $password) {
 function accountExists($email) {
     global $conn;
 
-    $stmt = $conn->prepare("SELECT * FROM users WHERE email=?");
-    $stmt->execute([$email]);
+    $stmt = $conn->prepare("SELECT * FROM users WHERE emailCheckHash=?");
+    $stmt->execute([hash("sha256", $email)]);
     $stmt->store_result();
     if ($stmt->num_rows == 1) {
         return true;
@@ -100,11 +102,11 @@ function createAccount($firstName, $lastName, $password, $email, $modePreference
 
     $password = hash("md5", $password);
 
-    $stmt = $conn->prepare("INSERT INTO users (firstName, lastName, email, password, modePreference, klasse) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$firstName, $lastName, $email, $password, $modePreference, $class]);
-
-    $stmt = $conn->prepare("SELECT userID FROM users WHERE email=?");
-    $stmt->execute([$email]);
+    $stmt = $conn->prepare("INSERT INTO users (firstName, lastName, email, emailCheckHash, password, modePreference, klasse) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([encrypt($firstName), encrypt($lastName), encrypt($email), hash("sha256", $email), $password, encrypt($modePreference), encrypt($class)]);
+    
+    $stmt = $conn->prepare("SELECT userID FROM users WHERE emailCheckHash=?");
+    $stmt->execute([hash("sha256", $email)]);
     $userID = $stmt->get_result()->fetch_column();
 
     $verifyCode = rand(111111, 999999);
@@ -116,8 +118,8 @@ function createAccount($firstName, $lastName, $password, $email, $modePreference
 function getUserID($email) {
     global $conn;
 
-    $stmt = $conn->prepare("SELECT userID FROM users WHERE email=?");
-    $stmt->execute([$email]);
+    $stmt = $conn->prepare("SELECT userID FROM users WHERE emailCheckHash=?");
+    $stmt->execute([hash("sha256", $email)]);
     return $stmt->get_result()->fetch_column();
 }
 

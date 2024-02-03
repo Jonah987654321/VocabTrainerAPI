@@ -1,13 +1,42 @@
 <?php
+
 include "utils.php";
+
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
+
+function errorHandling($errno, $errstr, $errfile, $errline) {
+    $errstr = htmlspecialchars($errstr);
+
+    switch ($errno) {
+        case E_USER_ERROR:
+            http_response_code(500);
+            echo json_encode(["Error" => $errstr, "Location" => "line $errline in file $errfile"]);
+            exit();
+    
+        case E_USER_WARNING:
+            break;
+    
+        case E_USER_NOTICE:
+            break;
+    
+        default:
+        http_response_code(500);
+        echo json_encode(["Error" => $errstr, "Location" => "line $errline in file $errfile"]);
+        exit();
+    }
+    
+    /* Don't execute PHP internal error handler */
+    return true;
+}
+
+set_error_handler("errorHandling");
 
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: OPTIONS,GET,POST,PUT,DELETE");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
-
-$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 $endpoint = get("action");
 $headers = getallheaders();
@@ -29,6 +58,10 @@ $allowedEndpoints = [
         "allowedMethods" => ["POST"],
         "authRequired" => true
     ],
+    "createCustomLesson" => [
+        "allowedMethods" => ["POST"],
+        "authRequired" => true
+    ]
 ];
 
 if (array_key_exists($endpoint, $allowedEndpoints)) {
@@ -60,11 +93,11 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                                 "token" => generateAndStoreToken($userData[0]),
                                 "userData" => [
                                     "userID" => $userData[0],
-                                    "firstName" => $userData[1],
-                                    "lastName" => $userData[2],
-                                    "email" => $userData[3],
-                                    "modePreference" => $userData[5],
-                                    "class" => $userData[6],
+                                    "firstName" => decrypt($userData[1]),
+                                    "lastName" => decrypt($userData[2]),
+                                    "email" => decrypt($userData[3]),
+                                    "modePreference" => decrypt($userData[5]),
+                                    "class" => decrypt($userData[6]),
                                 ]
                             ]);
                         } else {
@@ -84,7 +117,7 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                 $modePreference = post("modePreference");
                 $class = post("class");
 
-                if (in_array(null, [$firstName, $lastName, $email, $password, $modePreference])) {
+                if (in_array(null, [$firstName, $lastName, $email, $password, $modePreference, $class])) {
                     http_response_code(400);
                     echo json_encode(["Error" => "Missing information"]);
                     exit();
@@ -146,6 +179,11 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                     }
                 }
             }
+
+            if ($endpoint == "createCustomLesson") {
+
+            }
+            
         }
     } else {
         http_response_code(405);
