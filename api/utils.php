@@ -149,4 +149,53 @@ function userIsVerified($userID) {
     }
 }
 
+function resolveToken($token) {
+    global $conn;
+
+    $stmt = $conn->prepare("SELECT userID FROM tokens WHERE token=?");
+    $stmt->execute([$token]);
+
+    return $stmt->get_result()->fetch_column();
+}
+
+function allowSudo($token, $password) {
+    global $conn;
+
+    $stmt = $conn->prepare("SELECT firstName FROM users WHERE userID=? AND password=?");
+    $stmt->execute([resolveToken($token), hash("md5", $password)]);
+    $stmt->store_result();
+
+    if ($stmt->num_rows() == 0) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+function deleteAccount($userID) {
+    global $conn;
+
+    $stmt = $conn->prepare("DELETE FROM userVocabStats WHERE userID=?");
+    $stmt->execute([$userID]);
+
+    $stmt = $conn->prepare("DELETE FROM verificationCode WHERE userID=?");
+    $stmt->execute([$userID]);
+
+    $stmt = $conn->prepare("SELECT cLessonID FROM customLessons WHERE userID=?");
+    $stmt->execute([$userID]);
+    $cLessons = $stmt->get_result()->fetch_all();
+    foreach ($cLessons as $cL) {
+        $stmt = $conn->prepare("DELETE FROM customLessonVocabs WHERE cLessonID=?");
+        $stmt->execute($cL);
+    }
+    $stmt = $conn->prepare("DELETE FROM customLessons WHERE userID=?");
+    $stmt->execute([$userID]);
+
+    $stmt = $conn->prepare("DELETE FROM tokens WHERE userID=?");
+    $stmt->execute([$userID]);
+
+    $stmt = $conn->prepare("DELETE FROM users WHERE userID=?");
+    $stmt->execute([$userID]);
+}
+
 ?>

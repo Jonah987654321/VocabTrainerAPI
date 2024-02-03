@@ -25,6 +25,10 @@ $allowedEndpoints = [
         "allowedMethods" => ["POST"],
         "authRequired" => false
     ],
+    "deleteAccount" => [
+        "allowedMethods" => ["POST"],
+        "authRequired" => true
+    ],
 ];
 
 if (array_key_exists($endpoint, $allowedEndpoints)) {
@@ -118,6 +122,26 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                     } else {
                         http_response_code(401);
                         echo json_encode(["Error" => "Code and email not matching"]);
+                        exit();
+                    }
+                }
+            }
+
+            if ($endpoint == "deleteAccount") {
+                $token = $headers["Auth"];
+                $password = post("password");
+
+                if ($password == null || $token == null) {
+                    http_response_code(400);
+                    echo json_encode(["Error" => "Missing information"]);
+                    exit();
+                } else {
+                    if (allowSudo($token, $password)) {
+                        deleteAccount(resolveToken($token));
+                        echo json_encode(["Error" => ""]);
+                    } else {
+                        http_response_code(401);
+                        echo json_encode(["Error" => "Invalid login credentials"]);
                         exit();
                     }
                 }
