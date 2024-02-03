@@ -69,12 +69,12 @@ function validateToken($token) {
     }
 }
 
-function validateLogin($userName, $password) {
+function validateLogin($email, $password) {
     global $conn;
 
     //Check if credentials are correct
     $stmt = $conn->prepare("SELECT * FROM users WHERE email=? AND password=?");
-    $stmt->execute();
+    $stmt->execute([$email, $password]);
     $result = $stmt->get_result()->fetch_row();
 
     return $result;

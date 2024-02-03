@@ -33,6 +33,39 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
             http_response_code(401);
             echo json_encode(["Error" => "Unauthorized"]);
             exit();
+        } else {
+
+            if ($endpoint == "login") {
+                $email = post("email");
+                $password = post("password");
+
+                if ($email == null || $password == null) {
+                    http_response_code(400);
+                    echo json_encode(["Error" => "Missing login credentials"]);
+                    exit();
+                } else {
+                    $userData = validateLogin($email, hash("md5", $password));
+                    if ($userData == null) {
+                        http_response_code(401);
+                        echo json_encode(["Error" => "Invalid login credentials"]);
+                        exit();
+                    } else {
+                        echo json_encode([
+                            "Error" => "", 
+                            "token" => generateAndStoreToken($userData[0]),
+                            "userData" => [
+                                "userID" => $userData[0],
+                                "firstName" => $userData[1],
+                                "lastName" => $userData[2],
+                                "email" => $userData[3],
+                                "modePreference" => $userData[5],
+                                "class" => $userData[6],
+                            ]
+                        ]);
+                    }
+                }
+            }
+
         }
     } else {
         http_response_code(405);
