@@ -120,7 +120,7 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                 $lastName = getData("lastName");
                 $email = getData("email");
                 $password = getData("password");
-                $modePreference = getData("modePreference");
+                $modePreference = intval(getData("modePreference"));
                 $class = getData("class");
 
                 if (in_array(null, [$firstName, $lastName, $email, $password, $modePreference, $class])) {
