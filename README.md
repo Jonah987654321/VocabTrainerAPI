@@ -72,6 +72,24 @@ All endpoints except for `login`, `createAccount`, and `verifyAccount` require a
   - `400`: Missing information.
   - `401`: Invalid login credentials.
 
+### 5. `updateUserVocabStats`
+
+- **Description**: Updates the vocabulary statistics for a user.
+- **Method**: `POST`
+- **Parameters**:
+  - `statUpdates` (object, required): Object containing word statistics updates.
+    - Each key represents the vocabID for a word.
+    - Each value is an object with the following properties:
+      - `fails` (integer, required): Number of failed attempts for the word.
+      - `success` (integer, required): Number of successful attempts for the word.
+- **Headers**:
+  - `Auth` (string, required): Authentication token.
+- **Response**:
+  - `Error` (string): Empty if successful.
+- **Errors**:
+  - `400`: Missing information.
+  - `401`: Invalid login credentials.
+
 ## Error Handling
 
 The API returns appropriate HTTP status codes and error messages for different scenarios. Refer to each endpoint's description for details on possible errors.

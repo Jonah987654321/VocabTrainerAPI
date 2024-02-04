@@ -1,6 +1,8 @@
 <?php
 
 function encrypt(String $data) {
+    $data = strval($data);
+
     // Generate an initialization vector (IV)
     $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('aes-256-cbc'));
     
@@ -14,7 +16,6 @@ function encrypt(String $data) {
 }
 
 function decrypt(String $data) {
-    return $data;
     // Decode the base64 encoded input
     $data = base64_decode($data);
     

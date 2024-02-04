@@ -4,6 +4,7 @@ include "utils.php";
 
 ini_set('display_errors', 0);
 ini_set('display_startup_errors', 0);
+error_reporting(E_ALL);
 
 function errorHandling($errno, $errstr, $errfile, $errline) {
     $errstr = htmlspecialchars($errstr);
@@ -39,7 +40,12 @@ header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
 $endpoint = get("action");
+
 $headers = getallheaders();
+setReceivedHeaders($headers);
+
+$data = json_decode(file_get_contents('php://input'), true);
+setData($data);
 
 $allowedEndpoints = [
     "login" => [
@@ -58,7 +64,7 @@ $allowedEndpoints = [
         "allowedMethods" => ["POST"],
         "authRequired" => true
     ],
-    "createCustomLesson" => [
+    "updateUserVocabStats" => [
         "allowedMethods" => ["POST"],
         "authRequired" => true
     ]
@@ -66,15 +72,15 @@ $allowedEndpoints = [
 
 if (array_key_exists($endpoint, $allowedEndpoints)) {
     if (in_array($_SERVER["REQUEST_METHOD"],  $allowedEndpoints[$endpoint]["allowedMethods"])) {
-        if ($allowedEndpoints[$endpoint]["authRequired"] && $headers["Auth"] == null) {
+        if ($allowedEndpoints[$endpoint]["authRequired"] && getReceivedHeaders("Auth") == null) {
             http_response_code(401);
             echo json_encode(["Error" => "Unauthorized"]);
             exit();
         } else {
 
             if ($endpoint == "login") {
-                $email = post("email");
-                $password = post("password");
+                $email = getData("email");
+                $password = getData("password");
 
                 if ($email == null || $password == null) {
                     http_response_code(400);
@@ -96,8 +102,8 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                                     "firstName" => decrypt($userData[1]),
                                     "lastName" => decrypt($userData[2]),
                                     "email" => decrypt($userData[3]),
-                                    "modePreference" => decrypt($userData[5]),
-                                    "class" => decrypt($userData[6]),
+                                    "modePreference" => $userData[6],
+                                    "class" => $userData[7],
                                 ]
                             ]);
                         } else {
@@ -110,12 +116,12 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
             }
 
             if ($endpoint == "createAccount") {
-                $firstName = post("firstName");
-                $lastName = post("lastName");
-                $email = post("email");
-                $password = post("password");
-                $modePreference = post("modePreference");
-                $class = post("class");
+                $firstName = getData("firstName");
+                $lastName = getData("lastName");
+                $email = getData("email");
+                $password = getData("password");
+                $modePreference = getData("modePreference");
+                $class = getData("class");
 
                 if (in_array(null, [$firstName, $lastName, $email, $password, $modePreference, $class])) {
                     http_response_code(400);
@@ -141,8 +147,8 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
             }
 
             if ($endpoint == "verifyAccount") {
-                $email = post("email");
-                $code = post("code");
+                $email = getData("email");
+                $code = getData("code");
                 if ($code == null || $email == null) {
                     http_response_code(400);
                     echo json_encode(["Error" => "Missing information"]);
@@ -162,9 +168,9 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
 
             if ($endpoint == "deleteAccount") {
                 $token = $headers["Auth"];
-                $password = post("password");
+                $password = getData("password");
 
-                if ($password == null || $token == null) {
+                if ($password == null) {
                     http_response_code(400);
                     echo json_encode(["Error" => "Missing information"]);
                     exit();
@@ -180,8 +186,27 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                 }
             }
 
-            if ($endpoint == "createCustomLesson") {
+            if ($endpoint == "updateUserVocabStats") {
+                $token = $headers["Auth"];
+                $updateWords = getData("statUpdates");
 
+                if ($updateWords == null) {
+                    http_response_code(400);
+                    echo json_encode(["Error" => "Missing information"]);
+                    exit();
+                } else {
+                    if (validateToken($token)) {
+                        $userID = resolveToken($token);
+                        foreach ($updateWords as $word => $update) {
+                            updateWordStats($userID, $word, $update["fails"], $update["success"]);
+                        }
+                        echo json_encode(["Error" => ""]);
+                    } else {
+                        http_response_code(401);
+                        echo json_encode(["Error" => "Invalid login credentials"]);
+                        exit();
+                    }
+                }
             }
             
         }

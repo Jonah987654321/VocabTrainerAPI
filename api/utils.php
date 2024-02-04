@@ -4,16 +4,32 @@ include "encryption.php";
 include "dotenv.php";
 new DotEnv();
 
-function session($key, $default = NULL){
-    return array_key_exists($key, $_SESSION) ? $_SESSION[$key] : $default;
-}
-
 function get($key, $default = NULL){
     return array_key_exists($key, $_GET) ? $_GET[$key] : $default;
 }
 
-function post($key, $default = NULL) {
-    return array_key_exists($key, $_POST) ? $_POST[$key] : $default;
+$headers = array();
+function setReceivedHeaders($receivedHeaders) {
+    global $headers;
+
+    $headers = $receivedHeaders;
+}
+
+function getReceivedHeaders($key, $default = NULL) {
+    global $headers;
+    return array_key_exists($key, $headers) ? $headers[$key] : $default;
+}
+
+$data = array();
+function setData($receivedData) {
+    global $data;
+
+    $data = $receivedData;
+}
+
+function getData($key, $default = NULL) {
+    global $data;
+    return array_key_exists($key, $data) ? $data[$key] : $default;
 }
 
 $conn = new mysqli(getenv("DB_HOST"), getenv("DB_USER"), getenv("DB_PASS"), getenv("DB_NAME"));
@@ -73,15 +89,18 @@ function validateToken($token) {
 function validateLogin($email, $password) {
     global $conn;
 
-    $password = password_hash($password, PASSWORD_DEFAULT);
     $email = hash("sha256", $email);
 
     //Check if credentials are correct
-    $stmt = $conn->prepare("SELECT * FROM users WHERE emailCheckHash=? AND password=?");
-    $stmt->execute([$email, $password]);
+    $stmt = $conn->prepare("SELECT * FROM users WHERE emailCheckHash=?");
+    $stmt->execute([$email]);
     $result = $stmt->get_result()->fetch_row();
 
-    return $result;
+    if (password_verify($password,  $result[5])) {
+        return $result;
+    } else {
+        return null;
+    }
 }
 
 function accountExists($email) {
@@ -100,10 +119,10 @@ function accountExists($email) {
 function createAccount($firstName, $lastName, $password, $email, $modePreference, $class) {
     global $conn;
 
-    $password = hash("md5", $password);
+    $password = password_hash($password, PASSWORD_DEFAULT);
 
     $stmt = $conn->prepare("INSERT INTO users (firstName, lastName, email, emailCheckHash, password, modePreference, klasse) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([encrypt($firstName), encrypt($lastName), encrypt($email), hash("sha256", $email), $password, encrypt($modePreference), encrypt($class)]);
+    $stmt->execute([encrypt($firstName), encrypt($lastName), encrypt($email), hash("sha256", $email), $password, $modePreference, $class]);
     
     $stmt = $conn->prepare("SELECT userID FROM users WHERE emailCheckHash=?");
     $stmt->execute([hash("sha256", $email)]);
@@ -163,14 +182,14 @@ function resolveToken($token) {
 function allowSudo($token, $password) {
     global $conn;
 
-    $stmt = $conn->prepare("SELECT firstName FROM users WHERE userID=? AND password=?");
-    $stmt->execute([resolveToken($token), hash("md5", $password)]);
-    $stmt->store_result();
+    $stmt = $conn->prepare("SELECT password FROM users WHERE userID=?");
+    $stmt->execute([resolveToken($token)]);
+    $result = $stmt->get_result()->fetch_column();
 
-    if ($stmt->num_rows() == 0) {
-        return false;
-    } else {
+    if (password_verify($password, $result)) {
         return true;
+    } else {
+        return false;
     }
 }
 
@@ -198,6 +217,24 @@ function deleteAccount($userID) {
 
     $stmt = $conn->prepare("DELETE FROM users WHERE userID=?");
     $stmt->execute([$userID]);
+}
+
+function updateWordStats($userID, $vocabID, $newFails, $newSuccess) {
+    global $conn;
+
+    $stmt = $conn->prepare("SELECT * FROM userVocabStats WHERE userID=? AND vocabID=?");
+    $stmt->execute([$userID, $vocabID]);
+    $stmt->store_result();
+    if ($stmt->num_rows() == 0) {
+        $stmt = $conn->prepare("INSERT INTO userVocabStats (userID, vocabID, failCount, successCount) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$userID, $vocabID, $newFails, $newSuccess]);
+    } else {
+        $stmt = $conn->prepare("SELECT * FROM userVocabStats WHERE userID=? AND vocabID=?");
+        $stmt->execute([$userID, $vocabID]);
+        $result = $stmt->get_result()->fetch_row();
+        $stmt = $conn->prepare("UPDATE userVocabStats SET failCount=?, successCount=? WHERE userID=? AND vocabID=?");
+        $stmt->execute([intval($newFails)+intval($result[2]), intval($newSuccess)+intval($result[3]), $userID, $vocabID]);
+    }
 }
 
 ?>
