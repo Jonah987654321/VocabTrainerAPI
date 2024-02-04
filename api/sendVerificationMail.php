@@ -14,7 +14,7 @@ function sendVerificationCode($email, $code) {
     // Set mailer to use SMTP
     $mail->isSMTP();
 
-    // SMTP host (e.g., smtp.gmail.com)
+    // SMTP host
     $mail->Host = 'smtp.ionos.de';
 
     // SMTP authentication
@@ -27,65 +27,61 @@ function sendVerificationCode($email, $code) {
     // Enable TLS encryption
     $mail->SMTPSecure = 'tls';
 
-    // TCP port to connect to (usually 587 for TLS)
-    $mail->Port = 465;
+    // TCP port to connect to
+    $mail->Port = 587;
 
-    try {
-        // Set email parameters
-        $mail->setFrom('vt.jo-dev.net', 'VokabelTrainer');
-        $mail->addAddress($email); // Add a recipient
-        $mail->isHTML(true); // Set email format to HTML
-        $mail->Subject = 'Dein VokabelTrainer Verification Code'; // Email subject
+    // Set email parameters
+    $mail->setFrom('noreply@vt.jo-dev.net', 'VokabelTrainer');
+    $mail->addAddress($email); // Add a recipient
+    $mail->isHTML(true); // Set email format to HTML
+    $mail->Subject = 'Dein VokabelTrainer Verification Code'; // Email subject
 
-        // Email body with HTML and CSS styling
-        $mail->Body = '
-            <html>
-            <head>
-                <style>
-                    body {
-                        font-family: Arial, sans-serif;
-                        background-color: #f2f2f2;
-                        padding: 20px;
-                    }
-                    .container {
-                        max-width: 600px;
-                        margin: 0 auto;
-                        background-color: #ffffff;
-                        border-radius: 10px;
-                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                        padding: 30px;
-                    }
-                    h2 {
-                        color: #333333;
-                    }
-                    p {
-                        color: #666666;
-                    }
-                    .verification-code {
-                        font-size: 24px;
-                        color: #007bff;
-                        margin-top: 20px;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <h2>Verification Code</h2>
-                    <p>Your verification code is:</p>
-                    <p class="verification-code">' . $code . '</p>
-                </div>
-            </body>
-            </html>
-        ';
+    // Email body with HTML and CSS styling
+    $mail->Body = '
+        <html>
+        <head>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f2f2f2;
+                    padding: 20px;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 0 auto;
+                    background-color: #ffffff;
+                    border-radius: 10px;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                    padding: 30px;
+                }
+                h2 {
+                    color: #333333;
+                }
+                p {
+                    color: #666666;
+                }
+                .verification-code {
+                    font-size: 24px;
+                    color: #007bff;
+                    margin-top: 20px;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h2>Verifizierungscode</h2>
+                <p>Dein Code zur Account-Verifizierung lautet:</p>
+                <p class="verification-code">' . $code . '</p>
+            </div>
+        </body>
+        </html>
+    ';
 
-        // Send the email
-        if ($mail->send()) {
-            return true; // Email sent successfully
-        } else {
-            return false; // Email not sent
-        }
-    } catch (Exception $e) {
-        return false; // An error occurred
+    // Send the email
+    if ($mail->send()) {
+        return true; // Email sent successfully
+    } else {
+        return false; // Email not sent
     }
 }
 ?>

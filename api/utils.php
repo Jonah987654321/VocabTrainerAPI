@@ -129,22 +129,26 @@ function accountExists($email) {
 
 // Function to create a new user account
 function createAccount($firstName, $lastName, $password, $email, $modePreference, $class) {
-    global $conn;
-
-    $password = password_hash($password, PASSWORD_DEFAULT);
-
-    $stmt = $conn->prepare("INSERT INTO users (firstName, lastName, email, emailCheckHash, password, modePreference, klasse) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([encrypt($firstName), encrypt($lastName), encrypt($email), hash("sha256", $email), $password, $modePreference, $class]);
-
-    $stmt = $conn->prepare("SELECT userID FROM users WHERE emailCheckHash=?");
-    $stmt->execute([hash("sha256", $email)]);
-    $userID = $stmt->get_result()->fetch_column();
-
     $verifyCode = rand(111111, 999999);
     $currentDateTime = date('Y-m-d H:i:s');
-    sendVerificationCode($email, $verifyCode);
-    $stmt = $conn->prepare("INSERT INTO verificationCode VALUES (?, ?, ?)");
-    $stmt->execute([$userID, $verifyCode, $currentDateTime]);
+    if(sendVerificationCode($email, $verifyCode)) {
+        global $conn;
+
+        $password = password_hash($password, PASSWORD_DEFAULT);
+
+        $stmt = $conn->prepare("INSERT INTO users (firstName, lastName, email, emailCheckHash, password, modePreference, klasse) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([encrypt($firstName), encrypt($lastName), encrypt($email), hash("sha256", $email), $password, $modePreference, $class]);
+
+        $stmt = $conn->prepare("SELECT userID FROM users WHERE emailCheckHash=?");
+        $stmt->execute([hash("sha256", $email)]);
+        $userID = $stmt->get_result()->fetch_column();
+
+        $stmt = $conn->prepare("INSERT INTO verificationCode VALUES (?, ?, ?)");
+        $stmt->execute([$userID, $verifyCode, $currentDateTime]);
+        return true;
+    } else {
+        return false;
+    }
 }
 
 // Function to get the user ID by email

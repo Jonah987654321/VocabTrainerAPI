@@ -22,9 +22,9 @@ function errorHandling($errno, $errstr, $errfile, $errline) {
             break;
     
         default:
-        http_response_code(500);
-        echo json_encode(["Error" => $errstr, "Location" => "line $errline in file $errfile"]);
-        exit();
+            http_response_code(500);
+            echo json_encode(["Error" => $errstr, "Location" => "line $errline in file $errfile"]);
+            exit();
     }
     
     /* Don't execute PHP internal error handler */
@@ -32,6 +32,19 @@ function errorHandling($errno, $errstr, $errfile, $errline) {
 }
 
 set_error_handler("errorHandling");
+
+// Set shutdown handler
+register_shutdown_function('api_fatal_error_handler');
+
+function api_fatal_error_handler() {
+    $error = error_get_last();
+
+    if ($error && error_reporting() && $error['type'] === E_ERROR) {
+        http_response_code(500);
+        echo json_encode(["Error" => $error["message"], "Location" => "line ".$error['line']." in file ".$error['file']]);
+        exit();
+    }
+}
 
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
@@ -134,10 +147,13 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                         exit();
                     } else {
                         try {
-                            createAccount($firstName, $lastName, $password, $email, $modePreference, $class);
-
-                            //Send verification code!!!
-                            echo json_encode(["Error" => ""]);
+                            if (createAccount($firstName, $lastName, $password, $email, $modePreference, $class)) {
+                                echo json_encode(["Error" => ""]);
+                            } else {
+                                http_response_code(400);
+                                echo json_encode(["Error" => "Invalid email"]);
+                                exit();
+                            }
                         } catch (Exception $e) {
                             echo json_encode(["Error" => $e->getMessage()]);
                         }
@@ -203,7 +219,7 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                         echo json_encode(["Error" => ""]);
                     } else {
                         http_response_code(401);
-                        echo json_encode(["Error" => "Invalid login credentials"]);
+                        echo json_encode(["Error" => "Invalid token"]);
                         exit();
                     }
                 }
