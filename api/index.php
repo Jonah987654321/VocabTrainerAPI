@@ -77,6 +77,10 @@ $allowedEndpoints = [
         "allowedMethods" => ["POST"],
         "authRequired" => true
     ],
+    "initiatePasswordReset" => [
+        "allowedMethods" => ["POST"],
+        "authRequired" => true
+    ],
     "updateUserVocabStats" => [
         "allowedMethods" => ["POST"],
         "authRequired" => true
@@ -179,6 +183,20 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                         echo json_encode(["Error" => "Code and email not matching"]);
                         exit();
                     }
+                }
+            }
+
+            if ($endpoint == "initiatePasswordReset") {
+                $email = getData('email');
+                if ($email == null) {
+                    http_response_code(400);
+                    echo json_encode(["Error" => "Missing information"]);
+                    exit();
+                } else {
+                    if (accountExists($email)) {
+                        initiatePasswordReset($email);
+                    }
+                    echo json_encode(["Error" => ""]);
                 }
             }
 

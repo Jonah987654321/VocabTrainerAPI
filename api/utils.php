@@ -2,7 +2,7 @@
 
 // Include encryption and dotenv files
 include "encryption.php";
-include "sendVerificationMail.php";
+include "mailManager.php";
 include "dotenv.php";
 new DotEnv();
 
@@ -259,6 +259,18 @@ function updateWordStats($userID, $vocabID, $newFails, $newSuccess) {
         $stmt = $conn->prepare("UPDATE userVocabStats SET failCount=?, successCount=? WHERE userID=? AND vocabID=?");
         $stmt->execute([intval($newFails)+intval($result[2]), intval($newSuccess)+intval($result[3]), $userID, $vocabID]);
     }
+}
+
+function initiatePasswordReset($email) {
+    global $conn;
+
+    $userID = getUserID($email);
+    $resetCode = rand(111111, 999999);
+    $currentDateTime = date('Y-m-d H:i:s');
+    $stmt = $conn->prepare("INSERT INTO passwordResets (userID, resetCode, timeSent) VALUES (?, ?, ?)");
+    $stmt->execute([$userID, $resetCode, $currentDateTime]);
+
+    sendResetCode($email, $resetCode);
 }
 
 ?>
