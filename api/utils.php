@@ -1,14 +1,19 @@
 <?php
 
+// Include encryption and dotenv files
 include "encryption.php";
 include "dotenv.php";
 new DotEnv();
 
-function get($key, $default = NULL){
+// Function to get a value from the GET request with a default value
+function get($key, $default = NULL)
+{
     return array_key_exists($key, $_GET) ? $_GET[$key] : $default;
 }
 
+// Function and variable to handle received headers
 $headers = array();
+
 function setReceivedHeaders($receivedHeaders) {
     global $headers;
 
@@ -20,7 +25,9 @@ function getReceivedHeaders($key, $default = NULL) {
     return array_key_exists($key, $headers) ? $headers[$key] : $default;
 }
 
+// Function and variable to handle received data
 $data = array();
+
 function setData($receivedData) {
     global $data;
 
@@ -32,6 +39,7 @@ function getData($key, $default = NULL) {
     return array_key_exists($key, $data) ? $data[$key] : $default;
 }
 
+// Connect to the database using environment variables
 $conn = new mysqli(getenv("DB_HOST"), getenv("DB_USER"), getenv("DB_PASS"), getenv("DB_NAME"));
 
 // Function to generate a random token
@@ -86,12 +94,13 @@ function validateToken($token) {
     }
 }
 
+// Function to validate user login
 function validateLogin($email, $password) {
     global $conn;
 
     $email = hash("sha256", $email);
 
-    //Check if credentials are correct
+    // Check if credentials are correct
     $stmt = $conn->prepare("SELECT * FROM users WHERE emailCheckHash=?");
     $stmt->execute([$email]);
     $result = $stmt->get_result()->fetch_row();
@@ -103,6 +112,7 @@ function validateLogin($email, $password) {
     }
 }
 
+// Function to check if an account exists with the given email
 function accountExists($email) {
     global $conn;
 
@@ -116,6 +126,7 @@ function accountExists($email) {
     }
 }
 
+// Function to create a new user account
 function createAccount($firstName, $lastName, $password, $email, $modePreference, $class) {
     global $conn;
 
@@ -123,7 +134,7 @@ function createAccount($firstName, $lastName, $password, $email, $modePreference
 
     $stmt = $conn->prepare("INSERT INTO users (firstName, lastName, email, emailCheckHash, password, modePreference, klasse) VALUES (?, ?, ?, ?, ?, ?, ?)");
     $stmt->execute([encrypt($firstName), encrypt($lastName), encrypt($email), hash("sha256", $email), $password, $modePreference, $class]);
-    
+
     $stmt = $conn->prepare("SELECT userID FROM users WHERE emailCheckHash=?");
     $stmt->execute([hash("sha256", $email)]);
     $userID = $stmt->get_result()->fetch_column();
@@ -134,6 +145,7 @@ function createAccount($firstName, $lastName, $password, $email, $modePreference
     $stmt->execute([$userID, $verifyCode, $currentDateTime]);
 }
 
+// Function to get the user ID by email
 function getUserID($email) {
     global $conn;
 
@@ -142,6 +154,7 @@ function getUserID($email) {
     return $stmt->get_result()->fetch_column();
 }
 
+// Function to verify a user's account using a code
 function verifyCode($userID, $code) {
     global $conn;
 
@@ -157,6 +170,7 @@ function verifyCode($userID, $code) {
     }
 }
 
+// Function to check if a user's account is verified
 function userIsVerified($userID) {
     global $conn;
 
@@ -170,6 +184,7 @@ function userIsVerified($userID) {
     }
 }
 
+// Function to resolve a token and return the user ID
 function resolveToken($token) {
     global $conn;
 
@@ -179,6 +194,7 @@ function resolveToken($token) {
     return $stmt->get_result()->fetch_column();
 }
 
+// Function to allow sudo access with a token and password
 function allowSudo($token, $password) {
     global $conn;
 
@@ -193,6 +209,7 @@ function allowSudo($token, $password) {
     }
 }
 
+// Function to delete a user account
 function deleteAccount($userID) {
     global $conn;
 
@@ -219,6 +236,7 @@ function deleteAccount($userID) {
     $stmt->execute([$userID]);
 }
 
+// Function to update word stats for a user
 function updateWordStats($userID, $vocabID, $newFails, $newSuccess) {
     global $conn;
 
