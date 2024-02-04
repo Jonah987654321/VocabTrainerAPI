@@ -2,6 +2,7 @@
 
 // Include encryption and dotenv files
 include "encryption.php";
+include "sendVerificationMail.php";
 include "dotenv.php";
 new DotEnv();
 
@@ -141,6 +142,7 @@ function createAccount($firstName, $lastName, $password, $email, $modePreference
 
     $verifyCode = rand(111111, 999999);
     $currentDateTime = date('Y-m-d H:i:s');
+    sendVerificationCode($email, $verifyCode);
     $stmt = $conn->prepare("INSERT INTO verificationCode VALUES (?, ?, ?)");
     $stmt->execute([$userID, $verifyCode, $currentDateTime]);
 }
