@@ -50,7 +50,7 @@ function generateToken($length = 32) {
 
 // Function to generate a token expiration time (e.g., 1 hour from now)
 function generateExpirationTime() {
-    return date('Y-m-d H:i:s', strtotime('+1 hour'));
+    return date('Y-m-d H:i:s', strtotime('+600 seconds'));
 }
 
 // Function to generate and store a token for a user
@@ -172,8 +172,8 @@ function verifyCode($userID, $code) {
     if ($stmt->num_rows() == 0) {
         return false;
     } else {
-        $stmt = $conn->prepare("SELECT * FROM verificationCode WHERE verificationCode=? AND userID=? AND expiration>?");
-        $stmt->execute([$code, $userID, date('Y-m-d H:i:s')]);
+        $stmt = $conn->prepare("DELETE FROM verificationCode WHERE verificationCode=? AND userID=?");
+        $stmt->execute([$code, $userID]);
         return true;
     }
 }
@@ -290,6 +290,39 @@ function validatePasswordReset($email, $code) {
     } else {
         return true;
     }
+}
+
+function setPassword($email, $newPassword) {
+    global $conn;
+
+    $userID = getUserID($email);
+    $pwd = password_hash($newPassword, PASSWORD_DEFAULT);
+    $stmt = $conn->prepare("UPDATE users SET password=? WHERE userID=?");
+    $stmt->execute([$pwd, $userID]);
+
+    revokeAllTokens($userID);
+}
+
+function getAllTokens($userID) {
+    global $conn;
+
+    $stmt = $conn->prepare("SELECT token FROM tokens WHERE userID=?");
+    $stmt->execute([$userID]);
+    return $stmt->get_result()->fetch_all();
+}
+
+function revokeToken($token) {
+    global $conn;
+
+    $stmt = $conn->prepare("DELETE FROM tokens WHERE token=?");
+    $stmt->execute([$token]);
+}
+
+function revokeAllTokens($userID) {
+    global $conn;
+
+    $stmt = $conn->prepare("DELETE FROM tokens WHERE userID=?");
+    $stmt->execute([$userID]);
 }
 
 ?>

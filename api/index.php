@@ -226,6 +226,26 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                 }
             }
 
+            if ($endpoint == "doPasswordReset") {
+                $email = getData("email");
+                $code = getData("code");
+                $newPassword = getData("newPassword");
+                if ($email == null || $code == null || $newPassword == null) {
+                    http_response_code(400);
+                    echo json_encode(["Error" => "Missing information"]);
+                    exit();
+                } else {
+                    if (validatePasswordReset($email, $code)) {
+                        setPassword($email, $newPassword);
+                        echo json_encode(["Error" => ""]);
+                    } else {
+                        http_response_code(401);
+                        echo json_encode(["Error" => "Unauthorized"]);
+                        exit();
+                    }
+                }
+            }
+
             if ($endpoint == "deleteAccount") {
                 $token = $headers["Auth"];
                 $password = getData("password");
