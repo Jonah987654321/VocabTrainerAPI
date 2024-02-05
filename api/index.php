@@ -83,6 +83,11 @@ $allowedEndpoints = [
         "authRequired" => false,
         "rateLimits" => ["maxRequests" => 5, "timeWindow" => 600]
     ],
+    "validateToken" => [
+        "allowedMethods" => ["POST"],
+        "authRequired" => true,
+        "rateLimits" => ["maxRequests" => 5, "timeWindow" => 60]
+    ],
     "createAccount" => [
         "allowedMethods" => ["POST"],
         "authRequired" => false,
@@ -218,6 +223,11 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                         }
                     }
                 }
+            }
+
+            if ($endpoint == "validateToken") {
+                $token = $headers["Auth"];
+                echo json_encode(["Error" => "", "TokenValid" => validateToken($token)]);
             }
 
             if ($endpoint == "createAccount") {
