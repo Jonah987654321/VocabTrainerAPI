@@ -106,7 +106,10 @@ function validateLogin($email, $password) {
     $stmt->execute([$email]);
     $result = $stmt->get_result()->fetch_row();
 
-    if (password_verify($password,  $result[5])) {
+    if ($result == null) {
+        return null;
+    }
+    if (password_verify($password, $result[5])) {
         return $result;
     } else {
         return null;
@@ -265,6 +268,9 @@ function initiatePasswordReset($email) {
     global $conn;
 
     $userID = getUserID($email);
+    if (!userIsVerified($userID)) {
+        return;
+    }
     $resetCode = rand(111111, 999999);
     $currentDateTime = date('Y-m-d H:i:s');
     $stmt = $conn->prepare("INSERT INTO passwordResets (userID, resetCode, timeSent) VALUES (?, ?, ?)");

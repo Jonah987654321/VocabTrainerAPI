@@ -35,6 +35,9 @@ function sendMail($email, $subject, $content) {
     $mail->addAddress($email); // Add a recipient
     $mail->isHTML(true); // Set email format to HTML
 
+    $mail->CharSet   = 'UTF-8';
+    $mail->Encoding  = 'base64';
+
     $mail->Subject = $subject; // Email subject
     $mail->Body = $content;
 

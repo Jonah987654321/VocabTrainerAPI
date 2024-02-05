@@ -79,7 +79,7 @@ $allowedEndpoints = [
     ],
     "initiatePasswordReset" => [
         "allowedMethods" => ["POST"],
-        "authRequired" => true
+        "authRequired" => false
     ],
     "updateUserVocabStats" => [
         "allowedMethods" => ["POST"],
