@@ -300,6 +300,9 @@ function setPassword($email, $newPassword) {
     $stmt = $conn->prepare("UPDATE users SET password=? WHERE userID=?");
     $stmt->execute([$pwd, $userID]);
 
+    $stmt = $conn->prepare("DELETE FROM passwordResets WHERE userID=?");
+    $stmt->execute([$userID]);
+
     revokeAllTokens($userID);
 }
 
