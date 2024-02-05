@@ -92,7 +92,15 @@ $allowedEndpoints = [
     "updateUserVocabStats" => [
         "allowedMethods" => ["POST"],
         "authRequired" => true
-    ]
+    ],
+    "revokeAllTokens" => [
+        "allowedMethods" => ["POST"],
+        "authRequired" => true
+    ],
+    "logout" => [
+        "allowedMethods" => ["POST"],
+        "authRequired" => true
+    ],
 ];
 
 if (array_key_exists($endpoint, $allowedEndpoints)) {
@@ -286,6 +294,30 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                         echo json_encode(["Error" => "Invalid token"]);
                         exit();
                     }
+                }
+            }
+
+            if ($endpoint == "revokeAllTokens") {
+                $token = $headers["Auth"];
+                if (validateToken($token)) {
+                    revokeAllTokens(resolveToken($token));
+                    echo json_encode(["Error" => ""]);
+                } else {
+                    http_response_code(401);
+                    echo json_encode(["Error" => "Invalid token"]);
+                    exit();
+                }
+            }
+
+            if ($endpoint == "logout") {
+                $token = $headers["Auth"];
+                if (validateToken($token)) {
+                    revokeToken($token);
+                    echo json_encode(["Error" => ""]);
+                } else {
+                    http_response_code(401);
+                    echo json_encode(["Error" => "Invalid token"]);
+                    exit();
                 }
             }
             
