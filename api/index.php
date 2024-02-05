@@ -81,6 +81,14 @@ $allowedEndpoints = [
         "allowedMethods" => ["POST"],
         "authRequired" => false
     ],
+    "validatePasswordReset" => [
+        "allowedMethods" => ["POST"],
+        "authRequired" => false
+    ],
+    "doPasswordReset" => [
+        "allowedMethods" => ["POST"],
+        "authRequired" => false
+    ],
     "updateUserVocabStats" => [
         "allowedMethods" => ["POST"],
         "authRequired" => true
@@ -197,6 +205,24 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                         initiatePasswordReset($email);
                     }
                     echo json_encode(["Error" => ""]);
+                }
+            }
+
+            if ($endpoint == "validatePasswordReset") {
+                $email = getData("email");
+                $code = getData("code");
+                if ($email == null || $code == null) {
+                    http_response_code(400);
+                    echo json_encode(["Error" => "Missing information"]);
+                    exit();
+                } else {
+                    if (validatePasswordReset($email, $code)) {
+                        echo json_encode(["Error" => ""]);
+                    } else {
+                        http_response_code(401);
+                        echo json_encode(["Error" => "Unauthorized"]);
+                        exit();
+                    }
                 }
             }
 

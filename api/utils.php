@@ -133,7 +133,6 @@ function accountExists($email) {
 // Function to create a new user account
 function createAccount($firstName, $lastName, $password, $email, $modePreference, $class) {
     $verifyCode = rand(111111, 999999);
-    $currentDateTime = date('Y-m-d H:i:s');
     if(sendVerificationCode($email, $verifyCode)) {
         global $conn;
 
@@ -147,7 +146,7 @@ function createAccount($firstName, $lastName, $password, $email, $modePreference
         $userID = $stmt->get_result()->fetch_column();
 
         $stmt = $conn->prepare("INSERT INTO verificationCode VALUES (?, ?, ?)");
-        $stmt->execute([$userID, $verifyCode, $currentDateTime]);
+        $stmt->execute([$userID, $verifyCode, generateExpirationTime()]);
         return true;
     } else {
         return false;
@@ -167,14 +166,14 @@ function getUserID($email) {
 function verifyCode($userID, $code) {
     global $conn;
 
-    $stmt = $conn->prepare("SELECT * FROM verificationCode WHERE verificationCode=? AND userID=?");
-    $stmt->execute([$code, $userID]);
+    $stmt = $conn->prepare("SELECT * FROM verificationCode WHERE verificationCode=? AND userID=? AND expiration>?");
+    $stmt->execute([$code, $userID, date('Y-m-d H:i:s')]);
     $stmt->store_result();
     if ($stmt->num_rows() == 0) {
         return false;
     } else {
-        $stmt = $conn->prepare("DELETE FROM verificationCode WHERE verificationCode=? AND userID=?");
-        $stmt->execute([$code, $userID]);
+        $stmt = $conn->prepare("SELECT * FROM verificationCode WHERE verificationCode=? AND userID=? AND expiration>?");
+        $stmt->execute([$code, $userID, date('Y-m-d H:i:s')]);
         return true;
     }
 }
@@ -272,11 +271,25 @@ function initiatePasswordReset($email) {
         return;
     }
     $resetCode = rand(111111, 999999);
-    $currentDateTime = date('Y-m-d H:i:s');
-    $stmt = $conn->prepare("INSERT INTO passwordResets (userID, resetCode, timeSent) VALUES (?, ?, ?)");
-    $stmt->execute([$userID, $resetCode, $currentDateTime]);
+    $stmt = $conn->prepare("INSERT INTO passwordResets (userID, resetCode, expiration) VALUES (?, ?, ?)");
+    $stmt->execute([$userID, $resetCode, generateExpirationTime()]);
 
     sendResetCode($email, $resetCode);
+}
+
+function validatePasswordReset($email, $code) {
+    global $conn;
+
+    $userID = getUserID($email);
+    $currentDateTime = date('Y-m-d H:i:s');
+    $stmt = $conn->prepare("SELECT * FROM passwordResets WHERE userID=? AND resetCode=? AND expiration > ?");
+    $stmt->execute([$userID, $code, $currentDateTime]);
+    $stmt->store_result();
+    if($stmt->num_rows() == 0) {
+        return false;
+    } else {
+        return true;
+    }
 }
 
 ?>

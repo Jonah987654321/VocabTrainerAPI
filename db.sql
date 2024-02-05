@@ -37,11 +37,11 @@ CREATE TABLE `userVocabStats` (
 CREATE TABLE `verificationCode` (
     userID INTEGER NOT NULL,
     verificationCode INTEGER NOT NULL,
-    timeSent DATETIME NOT NULL
+    expiration DATETIME NOT NULL
 );
 
 CREATE TABLE `passwordResets` (
     userID INTEGER NOT NULL,
     resetCode INTEGER NOT NULL,
-    timeSent DATETIME NOT NULL
+    expiration DATETIME NOT NULL
 );
