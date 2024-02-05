@@ -1,7 +1,7 @@
 <?php
-
 include "utils.php";
 
+session_start();
 ini_set('display_errors', 0);
 ini_set('display_startup_errors', 0);
 error_reporting(E_ALL);
@@ -52,7 +52,24 @@ header("Access-Control-Allow-Methods: OPTIONS,GET,POST,PUT,DELETE");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
+function getClientIP() {
+    // Check for shared Internet IP address
+    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+        return $_SERVER['HTTP_CLIENT_IP'];
+    }
+    // Check for client IP address passed from a proxy
+    elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        return $_SERVER['HTTP_X_FORWARDED_FOR'];
+    }
+    // Return remote address (most reliable)
+    else {
+        return $_SERVER['REMOTE_ADDR'];
+    }
+}
+
 $endpoint = get("action");
+
+$clientIP = getClientIP();
 
 $headers = getallheaders();
 setReceivedHeaders($headers);
@@ -63,51 +80,106 @@ setData($data);
 $allowedEndpoints = [
     "login" => [
         "allowedMethods" => ["POST"],
-        "authRequired" => false
+        "authRequired" => false,
+        "rateLimits" => ["maxRequests" => 5, "timeWindow" => 600]
     ],
     "createAccount" => [
         "allowedMethods" => ["POST"],
-        "authRequired" => false
+        "authRequired" => false,
+        "rateLimits" => ["maxRequests" => 5, "timeWindow" => 3600]
     ],
     "verifyAccount" => [
         "allowedMethods" => ["POST"],
-        "authRequired" => false
+        "authRequired" => false,
+        "rateLimits" => ["maxRequests" => 15, "timeWindow" => 3600]
     ],
     "deleteAccount" => [
         "allowedMethods" => ["POST"],
-        "authRequired" => true
+        "authRequired" => true,
+        "rateLimits" => ["maxRequests" => 5, "timeWindow" => 3600]
     ],
     "initiatePasswordReset" => [
         "allowedMethods" => ["POST"],
-        "authRequired" => false
+        "authRequired" => false,
+        "rateLimits" => ["maxRequests" => 10, "timeWindow" => 3600]
     ],
     "validatePasswordReset" => [
         "allowedMethods" => ["POST"],
-        "authRequired" => false
+        "authRequired" => false,
+        "rateLimits" => ["maxRequests" => 15, "timeWindow" => 3600]
     ],
     "doPasswordReset" => [
         "allowedMethods" => ["POST"],
-        "authRequired" => false
+        "authRequired" => false,
+        "rateLimits" => ["maxRequests" => 15, "timeWindow" => 3600]
     ],
     "updateUserVocabStats" => [
         "allowedMethods" => ["POST"],
-        "authRequired" => true
+        "authRequired" => true,
+        "rateLimits" => ["maxRequests" => 10, "timeWindow" => 60]
     ],
     "revokeAllTokens" => [
         "allowedMethods" => ["POST"],
-        "authRequired" => true
+        "authRequired" => true,
+        "rateLimits" => ["maxRequests" => 10, "timeWindow" => 600]
     ],
     "logout" => [
         "allowedMethods" => ["POST"],
-        "authRequired" => true
+        "authRequired" => true,
+        "rateLimits" => ["maxRequests" => 10, "timeWindow" => 600]
     ],
 ];
+
+// Function to get rate limit key for the given endpoint and client
+function getRateLimitKey($endpoint, $clientIP) {
+    return "rate_limit:$endpoint:$clientIP";
+}
+
+// Check rate limits for the given endpoint and client
+function checkRateLimit($endpoint, $clientIP) {
+    global $allowedEndpoints;
+
+    // Get rate limit parameters for the endpoint
+    $maxRequests = $allowedEndpoints[$endpoint]["rateLimits"]["maxRequests"];
+    $timeWindow = $allowedEndpoints[$endpoint]["rateLimits"]["timeWindow"];
+
+    // Get or initialize rate limit data for the endpoint and client
+    $rateLimitKey = getRateLimitKey($endpoint, $clientIP);
+    if (!isset($_SESSION[$rateLimitKey])) {
+        $_SESSION[$rateLimitKey] = [
+            'requests' => 0,
+            'timestamp' => time()
+        ];
+    }
+    $rateLimitData = $_SESSION[$rateLimitKey];
+
+    // Check if the time window has elapsed
+    if (time() - $rateLimitData['timestamp'] > $timeWindow) {
+        $rateLimitData['requests'] = 0;
+        $rateLimitData['timestamp'] = time();
+    }
+
+    // Check if the client has exceeded the rate limit for the endpoint
+    if ($rateLimitData['requests'] >= $maxRequests) {
+        return false; // Rate limit exceeded
+    }
+
+    // Increment the request count
+    $rateLimitData['requests']++;
+    $_SESSION[$rateLimitKey] = $rateLimitData;
+
+    return true; // Rate limit not exceeded
+}
 
 if (array_key_exists($endpoint, $allowedEndpoints)) {
     if (in_array($_SERVER["REQUEST_METHOD"],  $allowedEndpoints[$endpoint]["allowedMethods"])) {
         if ($allowedEndpoints[$endpoint]["authRequired"] && getReceivedHeaders("Auth") == null) {
             http_response_code(401);
             echo json_encode(["Error" => "Unauthorized"]);
+            exit();
+        } elseif (!checkRateLimit($endpoint, $clientIP)) {
+            http_response_code(429);
+            echo json_encode(["Error" => "Rate limit exceeded for endpoint '$endpoint'"]);
             exit();
         } else {
 
