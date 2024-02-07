@@ -99,7 +99,7 @@ $allowedEndpoints = [
         "rateLimits" => ["maxRequests" => 15, "timeWindow" => 3600]
     ],
     "deleteAccount" => [
-        "allowedMethods" => ["POST"],
+        "allowedMethods" => ["DELETE"],
         "authRequired" => true,
         "rateLimits" => ["maxRequests" => 5, "timeWindow" => 3600]
     ],
@@ -114,7 +114,7 @@ $allowedEndpoints = [
         "rateLimits" => ["maxRequests" => 15, "timeWindow" => 3600]
     ],
     "doPasswordReset" => [
-        "allowedMethods" => ["POST"],
+        "allowedMethods" => ["PUT"],
         "authRequired" => false,
         "rateLimits" => ["maxRequests" => 15, "timeWindow" => 3600]
     ],
@@ -257,9 +257,10 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                                 exit();
                             }
                         } catch (Exception $e) {
+                            http_response_code(500);
                             echo json_encode(["Error" => $e->getMessage()]);
+                            exit();
                         }
-                        exit();
                     }
                 }
             }
