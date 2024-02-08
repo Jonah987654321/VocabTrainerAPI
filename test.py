@@ -13,10 +13,10 @@ if token is None:
 #resp = requests.post("https://vt.jo-dev.net/?action=initiatePasswordReset", json={"email": email})
 #print(resp.status_code, resp.json())
     
-resp = requests.post("https://vt.jo-dev.net/?action=validatePasswordReset", json={"email": email, "code": "121589"})
+resp = requests.post("https://vt.jo-dev.net/?action=validatePasswordReset", json={"email": email, "code": "285697"})
 print(resp.status_code, resp.json())
 
-resp = requests.post("https://vt.jo-dev.net/?action=doPasswordReset", json={"email": email, "code": "121589", "newPassword": password})
+resp = requests.put("https://vt.jo-dev.net/?action=doPasswordReset", json={"email": email, "code": "285697", "newPassword": password})
 print(resp.status_code, resp.json())
 
 #resp = requests.post("https://vt.jo-dev.net/?action=updateUserVocabStats", headers={"Auth": token}, json={"statUpdates": {1: {"fails": 3, "success": 1}}})

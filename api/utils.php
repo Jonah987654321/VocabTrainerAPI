@@ -328,4 +328,18 @@ function revokeAllTokens($userID) {
     $stmt->execute([$userID]);
 }
 
+function updateModePreference($userID, $newMode) {
+    global $conn;
+
+    $stmt = $conn->prepare("UPDATE users SET modePreference=? WHERE userID=?");
+    $stmt->execute([$newMode, $userID]);
+}
+
+function updateClass($userID, $newClass) {
+    global $conn;
+
+    $stmt = $conn->prepare("UPDATE users SET klasse=? WHERE userID=?");
+    $stmt->execute([$newClass, $userID]);
+}
+
 ?>

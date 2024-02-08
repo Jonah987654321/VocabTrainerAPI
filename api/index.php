@@ -133,6 +133,11 @@ $allowedEndpoints = [
         "authRequired" => true,
         "rateLimits" => ["maxRequests" => 10, "timeWindow" => 600]
     ],
+    "updatePreferences" => [
+        "allowedMethods" => ["PUT"],
+        "authRequired" => true,
+        "rateLimits" => ["maxRequests" => 10, "timeWindow" => 60]
+    ],
 ];
 
 // Function to get rate limit key for the given endpoint and client
@@ -396,6 +401,25 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                 $token = $headers["Auth"];
                 if (validateToken($token)) {
                     revokeToken($token);
+                    echo json_encode(["Error" => ""]);
+                } else {
+                    http_response_code(401);
+                    echo json_encode(["Error" => "Invalid token"]);
+                    exit();
+                }
+            }
+
+            if ($endpoint == "updatePreferences") {
+                $token = $headers["Auth"];
+                if (validateToken($token)) {
+                    $mode = getData("mode");
+                    $class = getData("class");
+                    if ($mode != null) {
+                        updateModePreference(resolveToken($token), $mode);
+                    }
+                    if ($class != null) {
+                        updateClass(resolveToken($token), $class);
+                    }
                     echo json_encode(["Error" => ""]);
                 } else {
                     http_response_code(401);
