@@ -263,6 +263,15 @@ function updateWordStats($userID, $vocabID, $newFails, $newSuccess) {
     }
 }
 
+function getWordStaByID($userID, $vocabID) {
+    global $conn;
+
+    $stmt = $conn->prepare("SELECT * FROM userVocabStats WHERE userID=? AND vocabID=?");
+    $stmt->execute([$userID, $vocabID]);
+    $result = $stmt->get_row();
+    return $result;
+}
+
 function initiatePasswordReset($email) {
     global $conn;
 
