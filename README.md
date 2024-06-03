@@ -1,5 +1,7 @@
 # API Documentation
 
+This is the API for the backend of [GUI-Voc](https://github.com/KyrylMikheiev/GUI-Voc)
+
 ## Introduction
 
 This API provides endpoints for user authentication and account management. It supports methods for user login, account creation, account verification, and account deletion.
