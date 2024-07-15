@@ -7,8 +7,7 @@ include "dotenv.php";
 new DotEnv();
 
 // Function to get a value from the GET request with a default value
-function get($key, $default = NULL)
-{
+function get($key, $default = NULL) {
     return array_key_exists($key, $_GET) ? $_GET[$key] : $default;
 }
 
@@ -349,6 +348,16 @@ function updateClass($userID, $newClass) {
 
     $stmt = $conn->prepare("UPDATE users SET klasse=? WHERE userID=?");
     $stmt->execute([$newClass, $userID]);
+}
+
+function getPrefences($userID) {
+    global $conn;
+
+    $stmt = $conn->prepare("SELECT modePreference, klasse FROM users WHERE userID=?");
+    $stmt->execute([$userID]);
+
+    $result = $stmt->get_result();
+    return $result->fetch_row();
 }
 
 ?>
