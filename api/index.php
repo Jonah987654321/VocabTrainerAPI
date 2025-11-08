@@ -213,24 +213,20 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                         echo json_encode(["Error" => "Invalid login credentials"]);
                         exit();
                     } else {
-                        if (userIsVerified($userData[0])) {
-                            echo json_encode([
-                                "Error" => "", 
-                                "token" => generateAndStoreToken($userData[0]),
-                                "userData" => [
-                                    "userID" => $userData[0],
-                                    "firstName" => decrypt($userData[1]),
-                                    "lastName" => decrypt($userData[2]),
-                                    "email" => decrypt($userData[3]),
-                                    "modePreference" => $userData[6],
-                                    "class" => $userData[7],
-                                ]
-                            ]);
-                        } else {
-                            http_response_code(401);
-                            echo json_encode(["Error" => "Account not verified"]);
-                            exit();
-                        }
+                        $verified = userIsVerified($userData[0]);
+                        echo json_encode([
+                            "Error" => "", 
+                            "verified" => $verified,
+                            "token" => ($verified)?generateAndStoreToken($userData[0]):"",
+                            "userData" => [
+                                "userID" => $userData[0],
+                                "firstName" => decrypt($userData[1]),
+                                "lastName" => decrypt($userData[2]),
+                                "email" => decrypt($userData[3]),
+                                "modePreference" => $userData[6],
+                                "class" => $userData[7],
+                            ]
+                        ]);
                     }
                 }
             }
