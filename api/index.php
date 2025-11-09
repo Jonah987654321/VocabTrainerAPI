@@ -233,7 +233,13 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
 
             if ($endpoint == "validateToken") {
                 $token = $headers["Auth"];
-                echo json_encode(["Error" => "", "TokenValid" => validateToken($token)]);
+                $valid = validateToken($token);
+                if ($valid) {
+                    $userData = getUserData(resolveToken($token));
+                    echo json_encode(["Error" => "", "tokenValid" => $valid, "userData"=>$userData]);
+                } else {
+                    echo json_encode(["Error" => "", "tokenValid" => $valid]);
+                }
             }
 
             if ($endpoint == "createAccount") {
@@ -282,7 +288,7 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                     $userID = getUserID($email);
                     $success = verifyCode($userID, $code);
                     if ($success) {
-                        echo json_encode(["Error" => "", "token" => generateAndStoreToken($userID)]);
+                        echo json_encode(["Error" => "", "token" => generateAndStoreToken($userID), "userData" => getUserData($userID)]);
                     } else {
                         http_response_code(401);
                         echo json_encode(["Error" => "Code and email not matching"]);

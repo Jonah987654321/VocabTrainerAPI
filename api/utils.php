@@ -201,6 +201,16 @@ function resolveToken($token) {
     return $stmt->get_result()->fetch_column();
 }
 
+function getUserData($userID) {
+    global $conn;
+
+    $stmt = $conn->prepare("SELECT * FROM users WHERE userID=?");
+    $stmt->execute([$email]);
+    $result = $stmt->get_result()->fetch_row();
+
+    return $result;
+}
+
 // Function to allow sudo access with a token and password
 function allowSudo($token, $password) {
     global $conn;
