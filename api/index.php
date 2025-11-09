@@ -236,7 +236,18 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                 $valid = validateToken($token);
                 if ($valid) {
                     $userData = getUserData(resolveToken($token));
-                    echo json_encode(["Error" => "", "tokenValid" => $valid, "userData"=>$userData]);
+                    echo json_encode([
+                        "Error" => "",
+                        "tokenValid" => $valid,
+                        "userData" => [
+                                "userID" => $userData[0],
+                                "firstName" => decrypt($userData[1]),
+                                "lastName" => decrypt($userData[2]),
+                                "email" => decrypt($userData[3]),
+                                "modePreference" => $userData[6],
+                                "class" => $userData[7],
+                            ]
+                        ]);
                 } else {
                     echo json_encode(["Error" => "", "tokenValid" => $valid]);
                 }
@@ -288,7 +299,18 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                     $userID = getUserID($email);
                     $success = verifyCode($userID, $code);
                     if ($success) {
-                        echo json_encode(["Error" => "", "token" => generateAndStoreToken($userID), "userData" => getUserData($userID)]);
+                        echo json_encode([
+                            "Error" => "",
+                            "token" => generateAndStoreToken($userID),
+                            "userData" => [
+                                "userID" => $userData[0],
+                                "firstName" => decrypt($userData[1]),
+                                "lastName" => decrypt($userData[2]),
+                                "email" => decrypt($userData[3]),
+                                "modePreference" => $userData[6],
+                                "class" => $userData[7],
+                            ]
+                        ]);
                     } else {
                         http_response_code(401);
                         echo json_encode(["Error" => "Code and email not matching"]);
