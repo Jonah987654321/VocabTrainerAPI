@@ -216,10 +216,10 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                         $verified = userIsVerified($userData[0]);
                         echo json_encode([
                             "Error" => "", 
-                            "verified" => $verified,
                             "token" => ($verified)?generateAndStoreToken($userData[0]):"",
                             "userData" => [
                                 "userID" => $userData[0],
+                                "verified" => $verified,
                                 "firstName" => decrypt($userData[1]),
                                 "lastName" => decrypt($userData[2]),
                                 "email" => decrypt($userData[3]),
@@ -241,6 +241,7 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                         "tokenValid" => $valid,
                         "userData" => [
                                 "userID" => $userData[0],
+                                "verified" => userIsVerified($userData[0]),
                                 "firstName" => decrypt($userData[1]),
                                 "lastName" => decrypt($userData[2]),
                                 "email" => decrypt($userData[3]),
@@ -304,6 +305,7 @@ if (array_key_exists($endpoint, $allowedEndpoints)) {
                             "token" => generateAndStoreToken($userID),
                             "userData" => [
                                 "userID" => $userData[0],
+                                "verified" => userIsVerified($userData[0]),
                                 "firstName" => decrypt($userData[1]),
                                 "lastName" => decrypt($userData[2]),
                                 "email" => decrypt($userData[3]),
