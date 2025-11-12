@@ -205,7 +205,7 @@ function getUserData($userID) {
     global $conn;
 
     $stmt = $conn->prepare("SELECT * FROM users WHERE userID=?");
-    $stmt->execute([$email]);
+    $stmt->execute([$userID]);
     $result = $stmt->get_result()->fetch_row();
 
     return $result;
